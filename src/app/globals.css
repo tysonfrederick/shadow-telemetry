@@ -1,26 +1,117 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #06090e;
+  --foreground: #e8eef4;
+  --obsidian: #06090e;
+  --slate-panel: #0c1219;
+  --slate-raised: #121a24;
+  --slate-line: #1c2733;
+  --slate-muted: #8b9aab;
+  --accent-teal: #2ee6d6;
+  --accent-amber: #f5a524;
+  --accent-crimson: #ff3b5c;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-obsidian: var(--obsidian);
+  --color-slate-panel: var(--slate-panel);
+  --color-slate-raised: var(--slate-raised);
+  --color-slate-line: var(--slate-line);
+  --color-slate-muted: var(--slate-muted);
+  --color-accent-teal: var(--accent-teal);
+  --color-accent-amber: var(--accent-amber);
+  --color-accent-crimson: var(--accent-crimson);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background: var(--obsidian);
+  color: var(--foreground);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  background-image:
+    radial-gradient(ellipse 90% 42% at 50% -8%, rgba(46, 230, 214, 0.07), transparent 55%),
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size:
+    auto,
+    28px 28px,
+    28px 28px;
+  min-height: 100dvh;
+}
+
+.divergence-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #2ee6d6 0%,
+    #f5a524 58%,
+    #ff3b5c 100%
+  );
+  outline: none;
+}
+
+.divergence-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #e8eef4;
+  border: 3px solid #06090e;
+  box-shadow: 0 0 0 1px #8b9aab, 0 0 18px rgba(46, 230, 214, 0.35);
+  cursor: pointer;
+}
+
+.divergence-slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #e8eef4;
+  border: 3px solid #06090e;
+  box-shadow: 0 0 0 1px #8b9aab, 0 0 18px rgba(46, 230, 214, 0.35);
+  cursor: pointer;
+}
+
+@keyframes somatic-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+    box-shadow: 0 0 12px var(--somatic-glow);
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+    box-shadow: 0 0 34px var(--somatic-glow);
+  }
+}
+
+@keyframes somatic-breathe-inner {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+.somatic-ring {
+  animation: somatic-breathe var(--somatic-pulse) ease-in-out infinite;
+}
+
+.somatic-ring-inner {
+  animation: somatic-breathe-inner var(--somatic-pulse) ease-in-out infinite;
 }
