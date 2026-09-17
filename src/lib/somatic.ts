@@ -1,9 +1,4 @@
-import type {
-  ComplexityTier,
-  FrictionLevel,
-  PanelState,
-  SomaticState,
-} from "@/types/telemetry";
+import type { AppState, ComplexityTier, FrictionLevel, SomaticState } from "@/types/telemetry";
 
 const FRICTION_WEIGHT: Record<FrictionLevel, number> = {
   low: 0,
@@ -22,38 +17,40 @@ export function cognitiveLoadScore(
   return Math.round((tierScore + frictionScore + divergenceScore) / 3);
 }
 
-export function deriveSomaticState(panel: PanelState): SomaticState {
-  const intensity = Math.min(
-    1,
-    ((panel.tier - 1) / 3) * 0.35 +
-      (panel.divergenceScore / 100) * 0.35 +
-      FRICTION_WEIGHT[panel.frictionLevel] * 0.3,
-  );
-
-  if (intensity >= 0.66 || panel.frictionLevel === "critical") {
-    return {
-      band: "threat",
-      label: "SYSTEMIC",
-      accent: "#ff3b5c",
-      glow: "rgba(255, 59, 92, 0.55)",
-      pulseMs: 720,
-      intensity,
-    };
-  }
-
-  if (
-    intensity >= 0.33 ||
-    panel.tier >= 3 ||
-    panel.divergenceScore >= 50 ||
-    panel.frictionLevel === "elevated"
-  ) {
+export function deriveSomaticState(
+  appState: AppState,
+  isPaused: boolean,
+): SomaticState {
+  if (appState === "ACTIVE_NODE") {
     return {
       band: "tense",
-      label: "EXCEPTION",
+      label: "RECORDING",
       accent: "#f5a524",
       glow: "rgba(245, 165, 36, 0.5)",
       pulseMs: 1400,
-      intensity,
+      intensity: 0.55,
+    };
+  }
+
+  if (appState === "RECEIPT") {
+    return {
+      band: "tense",
+      label: "AWAITING INPUT",
+      accent: "#f5a524",
+      glow: "rgba(245, 165, 36, 0.38)",
+      pulseMs: 1800,
+      intensity: 0.4,
+    };
+  }
+
+  if (isPaused) {
+    return {
+      band: "serene",
+      label: "PAUSED",
+      accent: "#8b9aab",
+      glow: "rgba(139, 154, 171, 0.35)",
+      pulseMs: 2800,
+      intensity: 0,
     };
   }
 
@@ -63,6 +60,6 @@ export function deriveSomaticState(panel: PanelState): SomaticState {
     accent: "#2ee6d6",
     glow: "rgba(46, 230, 214, 0.48)",
     pulseMs: 2800,
-    intensity,
+    intensity: 0,
   };
 }

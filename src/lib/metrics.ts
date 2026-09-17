@@ -1,17 +1,35 @@
 import { cognitiveLoadScore } from "@/lib/somatic";
-import type { SynthesisMetrics, TelemetryEvent } from "@/types/telemetry";
+import type { SynthesisMetrics, TelemetrySession } from "@/types/telemetry";
+
+export function pauseMs(session: TelemetrySession, nowMs: number): number {
+  const live =
+    session.isPaused && session.pauseStartedMs !== null
+      ? Math.max(0, nowMs - session.pauseStartedMs)
+      : 0;
+  return session.accumulatedPausedMs + live;
+}
+
+export function shiftElapsedMs(session: TelemetrySession, nowMs: number): number {
+  if (session.sessionStartMs <= 0 || nowMs <= 0) return 0;
+  return Math.max(0, nowMs - session.sessionStartMs - pauseMs(session, nowMs));
+}
+
+export function taskElapsedMs(session: TelemetrySession, nowMs: number): number {
+  if (session.lockedTaskDurationMs !== null) {
+    return session.lockedTaskDurationMs;
+  }
+  if (session.currentTaskStartMs === null || nowMs <= 0) return 0;
+  return Math.max(0, nowMs - session.currentTaskStartMs);
+}
 
 export function synthesizeMetrics(
-  events: TelemetryEvent[],
-  sessionStartMs: number,
+  session: TelemetrySession,
   nowMs: number,
 ): SynthesisMetrics {
-  const elapsedMs = Math.max(0, nowMs - sessionStartMs);
-  const chronological = [...events].sort(
-    (a, b) => a.sessionDurationMs - b.sessionDurationMs,
-  );
+  const elapsedMs = shiftElapsedMs(session, nowMs);
+  const events = session.events;
 
-  if (chronological.length === 0) {
+  if (events.length === 0) {
     return {
       totalShadowTimeMs: 0,
       peakCognitiveLoad: 0,
@@ -25,34 +43,27 @@ export function synthesizeMetrics(
   let weightedDivergence = 0;
   let coveredMs = 0;
 
-  for (let i = 0; i < chronological.length; i += 1) {
-    const current = chronological[i];
-    const nextAt =
-      i + 1 < chronological.length
-        ? chronological[i + 1].sessionDurationMs
-        : elapsedMs;
-    const dt = Math.max(0, nextAt - current.sessionDurationMs);
-    const weight = current.divergenceScore / 100;
-    shadowMs += dt * weight;
-    weightedDivergence += current.divergenceScore * dt;
-    coveredMs += dt;
+  for (const event of events) {
+    const taskMs = Math.max(0, event.taskDurationMs || 0);
+    shadowMs += taskMs * (event.divergenceScore / 100);
+    weightedDivergence += event.divergenceScore * taskMs;
+    coveredMs += taskMs;
   }
 
-  const peakCognitiveLoad = chronological.reduce((peak, event) => {
+  const peakCognitiveLoad = events.reduce((peak, event) => {
     return Math.max(
       peak,
       cognitiveLoadScore(event.tier, event.divergenceScore, event.frictionLevel),
     );
   }, 0);
 
-  const sopDivergenceRatio =
-    coveredMs > 0 ? weightedDivergence / coveredMs : 0;
+  const sopDivergenceRatio = coveredMs > 0 ? weightedDivergence / coveredMs : 0;
 
   return {
     totalShadowTimeMs: Math.round(shadowMs),
     peakCognitiveLoad,
     sopDivergenceRatio,
-    eventCount: chronological.length,
+    eventCount: events.length,
     elapsedMs,
   };
 }

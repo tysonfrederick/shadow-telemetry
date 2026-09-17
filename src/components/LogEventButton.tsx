@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import type { SomaticState } from "@/types/telemetry";
 
 interface LogEventButtonProps {
@@ -10,11 +9,10 @@ interface LogEventButtonProps {
 
 export function LogEventButton({ somatic, onLog }: LogEventButtonProps) {
   return (
-    <motion.button
+    <button
       type="button"
-      whileTap={{ scale: 0.96 }}
       onClick={onLog}
-      className="relative mt-1 flex min-h-14 w-full items-center justify-center overflow-hidden rounded-2xl border text-[15px] font-semibold tracking-[0.18em] uppercase text-obsidian"
+      className="relative mt-1 flex min-h-14 w-full items-center justify-center overflow-hidden rounded-2xl border text-[15px] font-semibold tracking-[0.18em] uppercase text-obsidian transition-transform active:scale-[0.96]"
       style={{
         background: somatic.accent,
         borderColor: somatic.accent,
@@ -22,6 +20,6 @@ export function LogEventButton({ somatic, onLog }: LogEventButtonProps) {
       }}
     >
       Log Event
-    </motion.button>
+    </button>
   );
 }

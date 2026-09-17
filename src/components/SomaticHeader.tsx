@@ -1,19 +1,25 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import type { SomaticState } from "@/types/telemetry";
+import type { AppState, SomaticState } from "@/types/telemetry";
 
 interface SomaticHeaderProps {
   somatic: SomaticState;
+  appState: AppState;
   elapsedMs: number;
+  taskElapsedMs: number;
   formatElapsed: (ms: number) => string;
 }
 
 export function SomaticHeader({
   somatic,
+  appState,
   elapsedMs,
+  taskElapsedMs,
   formatElapsed,
 }: SomaticHeaderProps) {
+  const showTaskTimer = appState === "ACTIVE_NODE" || appState === "RECEIPT";
+
   return (
     <header className="flex flex-col items-center pt-2 pb-5">
       <p className="font-mono text-[10px] tracking-[0.32em] text-slate-muted">
@@ -65,6 +71,11 @@ export function SomaticHeader({
       <p className="mt-1 font-mono text-[11px] text-slate-muted">
         SHIFT {formatElapsed(elapsedMs)}
       </p>
+      {showTaskTimer ? (
+        <p className="mt-1 font-mono text-[11px] tabular-nums text-accent-amber">
+          Active Node: {formatElapsed(taskElapsedMs)}
+        </p>
+      ) : null}
     </header>
   );
 }

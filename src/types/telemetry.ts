@@ -2,6 +2,8 @@ export type ComplexityTier = 1 | 2 | 3 | 4;
 
 export type FrictionLevel = "low" | "moderate" | "elevated" | "critical";
 
+export type AppState = "IDLE" | "ACTIVE_NODE" | "RECEIPT";
+
 export type SomaticBand = "serene" | "tense" | "threat";
 
 export interface PanelState {
@@ -17,11 +19,23 @@ export interface TelemetryEvent {
   divergenceScore: number;
   frictionLevel: FrictionLevel;
   sessionDurationMs: number;
+  taskDurationMs: number;
+}
+
+export interface TelemetrySession {
+  events: TelemetryEvent[];
+  sessionStartMs: number;
+  appState: AppState;
+  currentTaskStartMs: number | null;
+  lockedTaskDurationMs: number | null;
+  isPaused: boolean;
+  accumulatedPausedMs: number;
+  pauseStartedMs: number | null;
 }
 
 export interface SomaticState {
   band: SomaticBand;
-  label: "SOP ALIGNED" | "EXCEPTION" | "SYSTEMIC";
+  label: "SOP ALIGNED" | "PAUSED" | "RECORDING" | "AWAITING INPUT";
   accent: string;
   glow: string;
   pulseMs: number;
