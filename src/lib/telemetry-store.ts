@@ -1,4 +1,11 @@
-import type { PanelState, TelemetryEvent, TelemetrySession } from "@/types/telemetry";
+import type {
+  ActiveTask,
+  AppState,
+  PanelState,
+  TaskCategory,
+  TelemetryEvent,
+  TelemetrySession,
+} from "@/types/telemetry";
 import { shiftElapsedMs } from "@/lib/metrics";
 
 const SESSION_BLOB_KEY = "shadow-telemetry:session";
@@ -9,8 +16,8 @@ export const EMPTY_SESSION: TelemetrySession = {
   events: [],
   sessionStartMs: 0,
   appState: "IDLE",
-  currentTaskStartMs: null,
-  lockedTaskDurationMs: null,
+  activeTasks: [],
+  resolvingTaskId: null,
   isPaused: false,
   accumulatedPausedMs: 0,
   pauseStartedMs: null,
@@ -25,6 +32,23 @@ function isBrowser(): boolean {
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function isTaskCategory(value: unknown): value is TaskCategory {
+  return (
+    value === "physical" ||
+    value === "communication" ||
+    value === "software_exception"
+  );
+}
+
+function deriveAppState(
+  activeTasks: ActiveTask[],
+  resolvingTaskId: string | null,
+): AppState {
+  if (resolvingTaskId) return "RECEIPT";
+  if (activeTasks.length > 0) return "ACTIVE_NODE";
+  return "IDLE";
 }
 
 function isTelemetryEvent(value: unknown): value is TelemetryEvent {
@@ -48,23 +72,81 @@ function isTelemetryEvent(value: unknown): value is TelemetryEvent {
 
 function normalizeEvent(value: unknown): TelemetryEvent | null {
   if (!isTelemetryEvent(value)) return null;
-  const raw = value as TelemetryEvent & { taskDurationMs?: unknown };
+  const raw = value as TelemetryEvent & {
+    taskDurationMs?: unknown;
+    category?: unknown;
+    resolutionSteps?: unknown;
+  };
   const taskDurationMs = isFiniteNumber(raw.taskDurationMs)
     ? Math.max(0, raw.taskDurationMs)
     : 0;
-  return { ...raw, taskDurationMs };
+  const category: TaskCategory = isTaskCategory(raw.category)
+    ? raw.category
+    : "physical";
+  const resolutionSteps = isFiniteNumber(raw.resolutionSteps)
+    ? Math.max(0, Math.floor(raw.resolutionSteps))
+    : 0;
+  return { ...raw, taskDurationMs, category, resolutionSteps };
 }
 
-function idleMachine(): Pick<
+function normalizeActiveTask(value: unknown): ActiveTask | null {
+  if (!value || typeof value !== "object") return null;
+  const task = value as Record<string, unknown>;
+  if (typeof task.id !== "string" || !isFiniteNumber(task.startMs)) return null;
+  return {
+    id: task.id,
+    startMs: task.startMs,
+    lockedDurationMs: isFiniteNumber(task.lockedDurationMs)
+      ? Math.max(0, task.lockedDurationMs)
+      : null,
+  };
+}
+
+function migrateLegacyActiveTasks(blob: Record<string, unknown>): {
+  activeTasks: ActiveTask[];
+  resolvingTaskId: string | null;
+} {
+  if (Array.isArray(blob.activeTasks)) {
+    const activeTasks = blob.activeTasks
+      .map(normalizeActiveTask)
+      .filter((task): task is ActiveTask => task !== null);
+    const resolvingTaskId =
+      typeof blob.resolvingTaskId === "string" &&
+      activeTasks.some((task) => task.id === blob.resolvingTaskId)
+        ? blob.resolvingTaskId
+        : null;
+    return { activeTasks, resolvingTaskId };
+  }
+
+  if (!isFiniteNumber(blob.currentTaskStartMs)) {
+    return { activeTasks: [], resolvingTaskId: null };
+  }
+
+  const id = crypto.randomUUID();
+  const lockedDurationMs = isFiniteNumber(blob.lockedTaskDurationMs)
+    ? Math.max(0, blob.lockedTaskDurationMs)
+    : null;
+  const wasReceipt = blob.appState === "RECEIPT";
+  return {
+    activeTasks: [
+      {
+        id,
+        startMs: blob.currentTaskStartMs,
+        lockedDurationMs: wasReceipt ? lockedDurationMs : null,
+      },
+    ],
+    resolvingTaskId: wasReceipt ? id : null,
+  };
+}
+
+function idleStack(): Pick<
   TelemetrySession,
-  | "appState"
-  | "currentTaskStartMs"
-  | "lockedTaskDurationMs"
+  "appState" | "activeTasks" | "resolvingTaskId"
 > {
   return {
     appState: "IDLE",
-    currentTaskStartMs: null,
-    lockedTaskDurationMs: null,
+    activeTasks: [],
+    resolvingTaskId: null,
   };
 }
 
@@ -75,7 +157,7 @@ export function createFreshSession(nowMs: number): TelemetrySession {
     isPaused: false,
     accumulatedPausedMs: 0,
     pauseStartedMs: null,
-    ...idleMachine(),
+    ...idleStack(),
   };
 }
 
@@ -91,10 +173,14 @@ function persist(session: TelemetrySession) {
 }
 
 function commit(next: TelemetrySession): TelemetrySession {
-  clientSession = next;
-  persist(next);
+  const session: TelemetrySession = {
+    ...next,
+    appState: deriveAppState(next.activeTasks, next.resolvingTaskId),
+  };
+  clientSession = session;
+  persist(session);
   emit();
-  return next;
+  return session;
 }
 
 function parseSessionBlob(raw: string): TelemetrySession | null {
@@ -103,31 +189,30 @@ function parseSessionBlob(raw: string): TelemetrySession | null {
     if (!parsed || typeof parsed !== "object") return null;
     const blob = parsed as Record<string, unknown>;
     const events = Array.isArray(blob.events)
-      ? blob.events.map(normalizeEvent).filter((event): event is TelemetryEvent => event !== null)
+      ? blob.events
+          .map(normalizeEvent)
+          .filter((event): event is TelemetryEvent => event !== null)
       : [];
-    const sessionStartMs = isFiniteNumber(blob.sessionStartMs) ? blob.sessionStartMs : 0;
+    const sessionStartMs = isFiniteNumber(blob.sessionStartMs)
+      ? blob.sessionStartMs
+      : 0;
     if (sessionStartMs <= 0) return null;
 
-    const appState =
-      blob.appState === "ACTIVE_NODE" || blob.appState === "RECEIPT" || blob.appState === "IDLE"
-        ? blob.appState
-        : "IDLE";
+    const { activeTasks, resolvingTaskId } = migrateLegacyActiveTasks(blob);
 
     return {
       events,
       sessionStartMs,
-      appState,
-      currentTaskStartMs: isFiniteNumber(blob.currentTaskStartMs)
-        ? blob.currentTaskStartMs
-        : null,
-      lockedTaskDurationMs: isFiniteNumber(blob.lockedTaskDurationMs)
-        ? blob.lockedTaskDurationMs
-        : null,
+      appState: deriveAppState(activeTasks, resolvingTaskId),
+      activeTasks,
+      resolvingTaskId,
       isPaused: blob.isPaused === true,
       accumulatedPausedMs: isFiniteNumber(blob.accumulatedPausedMs)
         ? Math.max(0, blob.accumulatedPausedMs)
         : 0,
-      pauseStartedMs: isFiniteNumber(blob.pauseStartedMs) ? blob.pauseStartedMs : null,
+      pauseStartedMs: isFiniteNumber(blob.pauseStartedMs)
+        ? blob.pauseStartedMs
+        : null,
     };
   } catch {
     return null;
@@ -146,7 +231,9 @@ function loadLegacySession(): TelemetrySession | null {
     try {
       const parsed: unknown = JSON.parse(rawEvents);
       events = Array.isArray(parsed)
-        ? parsed.map(normalizeEvent).filter((event): event is TelemetryEvent => event !== null)
+        ? parsed
+            .map(normalizeEvent)
+            .filter((event): event is TelemetryEvent => event !== null)
         : [];
     } catch {
       events = [];
@@ -201,35 +288,68 @@ export function getServerSessionSnapshot(): TelemetrySession {
   return EMPTY_SESSION;
 }
 
-export function startNode(nowMs: number = Date.now()): TelemetrySession {
+function pushTask(nowMs: number): TelemetrySession {
   const current = readClientSession();
-  if (current.appState !== "IDLE" || current.isPaused) return current;
+  if (current.isPaused || current.appState === "RECEIPT") return current;
+  const task: ActiveTask = {
+    id: crypto.randomUUID(),
+    startMs: nowMs,
+    lockedDurationMs: null,
+  };
   return commit({
     ...current,
-    appState: "ACTIVE_NODE",
-    currentTaskStartMs: nowMs,
-    lockedTaskDurationMs: null,
+    activeTasks: [...current.activeTasks, task],
+    resolvingTaskId: null,
   });
 }
 
-export function endNode(nowMs: number = Date.now()): TelemetrySession {
+export function startNode(nowMs: number = Date.now()): TelemetrySession {
   const current = readClientSession();
-  if (current.appState !== "ACTIVE_NODE" || current.currentTaskStartMs === null) {
-    return current;
-  }
+  if (current.appState !== "IDLE" || current.isPaused) return current;
+  return pushTask(nowMs);
+}
+
+export function addConcurrentTask(nowMs: number = Date.now()): TelemetrySession {
+  const current = readClientSession();
+  if (current.appState !== "ACTIVE_NODE" || current.isPaused) return current;
+  return pushTask(nowMs);
+}
+
+export function resolveTask(
+  taskId: string,
+  nowMs: number = Date.now(),
+): TelemetrySession {
+  const current = readClientSession();
+  if (current.appState !== "ACTIVE_NODE") return current;
+  const task = current.activeTasks.find((item) => item.id === taskId);
+  if (!task || task.lockedDurationMs !== null) return current;
+
   return commit({
     ...current,
-    appState: "RECEIPT",
-    lockedTaskDurationMs: Math.max(0, nowMs - current.currentTaskStartMs),
+    resolvingTaskId: taskId,
+    activeTasks: current.activeTasks.map((item) =>
+      item.id === taskId
+        ? {
+            ...item,
+            lockedDurationMs: Math.max(0, nowMs - item.startMs),
+          }
+        : item,
+    ),
   });
+}
+
+function remainingAfterResolving(current: TelemetrySession): ActiveTask[] {
+  if (!current.resolvingTaskId) return current.activeTasks;
+  return current.activeTasks.filter((task) => task.id !== current.resolvingTaskId);
 }
 
 export function discardNode(): TelemetrySession {
   const current = readClientSession();
-  if (current.appState === "IDLE") return current;
+  if (current.appState !== "RECEIPT") return current;
   return commit({
     ...current,
-    ...idleMachine(),
+    activeTasks: remainingAfterResolving(current),
+    resolvingTaskId: null,
   });
 }
 
@@ -238,24 +358,32 @@ export function logEvent(
   nowMs: number = Date.now(),
 ): TelemetrySession {
   const current = readClientSession();
-  if (current.appState !== "RECEIPT" || current.lockedTaskDurationMs === null) {
+  if (current.appState !== "RECEIPT" || !current.resolvingTaskId) {
     return current;
   }
+
+  const resolving = current.activeTasks.find(
+    (task) => task.id === current.resolvingTaskId,
+  );
+  if (!resolving || resolving.lockedDurationMs === null) return current;
 
   const event: TelemetryEvent = {
     id: crypto.randomUUID(),
     timestamp: nowMs,
     tier: panel.tier,
+    category: panel.category,
+    resolutionSteps: Math.max(1, Math.floor(panel.resolutionSteps)),
     divergenceScore: panel.divergenceScore,
     frictionLevel: panel.frictionLevel,
     sessionDurationMs: shiftElapsedMs(current, nowMs),
-    taskDurationMs: current.lockedTaskDurationMs,
+    taskDurationMs: resolving.lockedDurationMs,
   };
 
   return commit({
     ...current,
     events: [event, ...current.events],
-    ...idleMachine(),
+    activeTasks: remainingAfterResolving(current),
+    resolvingTaskId: null,
   });
 }
 
@@ -290,4 +418,11 @@ export function setPaused(
 
 export function resetSession(nowMs: number = Date.now()): TelemetrySession {
   return commit(createFreshSession(nowMs));
+}
+
+export function getResolvingTask(
+  session: TelemetrySession,
+): ActiveTask | undefined {
+  if (!session.resolvingTaskId) return undefined;
+  return session.activeTasks.find((task) => task.id === session.resolvingTaskId);
 }

@@ -1,25 +1,35 @@
 "use client";
 
+import { ActiveTaskCard } from "@/components/ActiveTaskCard";
+import { CategorySelector } from "@/components/CategorySelector";
 import { ComplexityTierSelector } from "@/components/ComplexityTierSelector";
 import { DivergenceSlider } from "@/components/DivergenceSlider";
 import { FrictionSelector } from "@/components/FrictionSelector";
 import { LogEventButton } from "@/components/LogEventButton";
+import { ResolutionStepper } from "@/components/ResolutionStepper";
 import type {
+  ActiveTask,
   AppState,
   ComplexityTier,
   FrictionLevel,
   PanelState,
   SomaticState,
+  TaskCategory,
 } from "@/types/telemetry";
 
 interface TacticalControlPanelProps {
   appState: AppState;
   isPaused: boolean;
+  activeTasks: ActiveTask[];
+  resolvingElapsedLabel: string | null;
+  nowMs: number;
+  formatElapsed: (ms: number) => string;
   panel: PanelState;
   somatic: SomaticState;
   onChange: (next: PanelState) => void;
   onStartNode: () => void;
-  onEndNode: () => void;
+  onAddConcurrent: () => void;
+  onResolve: (taskId: string) => void;
   onDiscard: () => void;
   onLog: () => void;
   onTogglePause: () => void;
@@ -40,11 +50,16 @@ function DiscardButton({ onDiscard }: { onDiscard: () => void }) {
 export function TacticalControlPanel({
   appState,
   isPaused,
+  activeTasks,
+  resolvingElapsedLabel,
+  nowMs,
+  formatElapsed,
   panel,
   somatic,
   onChange,
   onStartNode,
-  onEndNode,
+  onAddConcurrent,
+  onResolve,
   onDiscard,
   onLog,
   onTogglePause,
@@ -82,35 +97,57 @@ export function TacticalControlPanel({
 
       {appState === "ACTIVE_NODE" ? (
         <>
-          <p className="text-center text-sm text-slate-muted">
-            Node is live. Score the exception after you end it.
-          </p>
+          <div className="space-y-2">
+            {activeTasks.map((task, index) => (
+              <ActiveTaskCard
+                key={task.id}
+                task={task}
+                index={index}
+                elapsedLabel={formatElapsed(
+                  task.lockedDurationMs ?? Math.max(0, nowMs - task.startMs),
+                )}
+                onResolve={onResolve}
+              />
+            ))}
+          </div>
           <button
             type="button"
-            onClick={onEndNode}
-            className="flex min-h-14 w-full items-center justify-center rounded-2xl border border-accent-amber bg-accent-amber text-[15px] font-semibold tracking-[0.18em] uppercase text-obsidian shadow-[0_0_28px_rgba(245,165,36,0.35)] transition-transform active:scale-[0.96]"
+            onClick={onAddConcurrent}
+            className="flex min-h-12 w-full items-center justify-center rounded-xl border border-accent-amber/50 bg-accent-amber/10 font-mono text-xs tracking-[0.14em] uppercase text-accent-amber active:scale-[0.96]"
           >
-            End Node
+            + Add Concurrent Task
           </button>
-          <DiscardButton onDiscard={onDiscard} />
         </>
       ) : null}
 
       {appState === "RECEIPT" ? (
         <>
+          {resolvingElapsedLabel ? (
+            <p className="font-mono text-sm tabular-nums text-accent-amber">
+              Frozen node {resolvingElapsedLabel}
+            </p>
+          ) : null}
           <ComplexityTierSelector
             value={panel.tier}
             onChange={(tier: ComplexityTier) => onChange({ ...panel, tier })}
           />
-          <DivergenceSlider
-            value={panel.divergenceScore}
-            onChange={(divergenceScore) => onChange({ ...panel, divergenceScore })}
+          <CategorySelector
+            value={panel.category}
+            onChange={(category: TaskCategory) => onChange({ ...panel, category })}
+          />
+          <ResolutionStepper
+            value={panel.resolutionSteps}
+            onChange={(resolutionSteps) => onChange({ ...panel, resolutionSteps })}
           />
           <FrictionSelector
             value={panel.frictionLevel}
             onChange={(frictionLevel: FrictionLevel) =>
               onChange({ ...panel, frictionLevel })
             }
+          />
+          <DivergenceSlider
+            value={panel.divergenceScore}
+            onChange={(divergenceScore) => onChange({ ...panel, divergenceScore })}
           />
           <LogEventButton somatic={somatic} onLog={onLog} />
           <DiscardButton onDiscard={onDiscard} />

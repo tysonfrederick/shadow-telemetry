@@ -1,0 +1,25 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@theme",
+      "description": "Tailwind CSS v4 theme namespace. Maps design tokens onto CSS custom properties."
+    },
+    {
+      "name": "@plugin",
+      "description": "Loads a Tailwind CSS v4 plugin."
+    },
+    {
+      "name": "@source",
+      "description": "Registers additional source files for Tailwind CSS v4 detection."
+    },
+    {
+      "name": "@utility",
+      "description": "Defines a custom Tailwind CSS v4 utility."
+    },
+    {
+      "name": "@custom-variant",
+      "description": "Defines a custom Tailwind CSS v4 custom variant."
+    }
+  ]
+}

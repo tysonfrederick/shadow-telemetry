@@ -7,7 +7,7 @@ interface SomaticHeaderProps {
   somatic: SomaticState;
   appState: AppState;
   elapsedMs: number;
-  taskElapsedMs: number;
+  stackCount: number;
   formatElapsed: (ms: number) => string;
 }
 
@@ -15,10 +15,10 @@ export function SomaticHeader({
   somatic,
   appState,
   elapsedMs,
-  taskElapsedMs,
+  stackCount,
   formatElapsed,
 }: SomaticHeaderProps) {
-  const showTaskTimer = appState === "ACTIVE_NODE" || appState === "RECEIPT";
+  const showStack = appState === "ACTIVE_NODE" || appState === "RECEIPT";
 
   return (
     <header className="flex flex-col items-center pt-2 pb-5">
@@ -71,9 +71,9 @@ export function SomaticHeader({
       <p className="mt-1 font-mono text-[11px] text-slate-muted">
         SHIFT {formatElapsed(elapsedMs)}
       </p>
-      {showTaskTimer ? (
+      {showStack ? (
         <p className="mt-1 font-mono text-[11px] tabular-nums text-accent-amber">
-          Active Node: {formatElapsed(taskElapsedMs)}
+          Active Stack: {stackCount}
         </p>
       ) : null}
     </header>

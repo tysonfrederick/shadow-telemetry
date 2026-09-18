@@ -1,7 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { FRICTION_LABELS, TIER_LABELS, type TelemetryEvent } from "@/types/telemetry";
+import {
+  CATEGORY_LABELS,
+  FRICTION_LABELS,
+  TIER_LABELS,
+  type TelemetryEvent,
+} from "@/types/telemetry";
 
 interface TelemetryStreamProps {
   events: TelemetryEvent[];
@@ -75,6 +80,15 @@ export function TelemetryStream({
                   </span>
                   <span className="rounded-full border border-slate-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-slate-muted">
                     {FRICTION_LABELS[event.frictionLevel]}
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-slate-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-slate-muted">
+                    {CATEGORY_LABELS[event.category]}
+                  </span>
+                  <span className="font-mono text-[10px] tabular-nums text-slate-muted">
+                    {event.resolutionSteps} step
+                    {event.resolutionSteps === 1 ? "" : "s"}
                   </span>
                 </div>
               </motion.li>

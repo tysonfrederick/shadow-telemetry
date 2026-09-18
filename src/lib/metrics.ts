@@ -1,5 +1,5 @@
 import { cognitiveLoadScore } from "@/lib/somatic";
-import type { SynthesisMetrics, TelemetrySession } from "@/types/telemetry";
+import type { ActiveTask, SynthesisMetrics, TelemetrySession } from "@/types/telemetry";
 
 export function pauseMs(session: TelemetrySession, nowMs: number): number {
   const live =
@@ -14,12 +14,12 @@ export function shiftElapsedMs(session: TelemetrySession, nowMs: number): number
   return Math.max(0, nowMs - session.sessionStartMs - pauseMs(session, nowMs));
 }
 
-export function taskElapsedMs(session: TelemetrySession, nowMs: number): number {
-  if (session.lockedTaskDurationMs !== null) {
-    return session.lockedTaskDurationMs;
+export function taskElapsedMs(task: ActiveTask, nowMs: number): number {
+  if (task.lockedDurationMs !== null) {
+    return task.lockedDurationMs;
   }
-  if (session.currentTaskStartMs === null || nowMs <= 0) return 0;
-  return Math.max(0, nowMs - session.currentTaskStartMs);
+  if (nowMs <= 0) return 0;
+  return Math.max(0, nowMs - task.startMs);
 }
 
 export function synthesizeMetrics(

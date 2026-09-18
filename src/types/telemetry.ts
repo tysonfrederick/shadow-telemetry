@@ -4,30 +4,44 @@ export type FrictionLevel = "low" | "moderate" | "elevated" | "critical";
 
 export type AppState = "IDLE" | "ACTIVE_NODE" | "RECEIPT";
 
+export type TaskCategory = "physical" | "communication" | "software_exception";
+
 export type SomaticBand = "serene" | "tense" | "threat";
 
 export interface PanelState {
   tier: ComplexityTier;
+  category: TaskCategory;
+  resolutionSteps: number;
   divergenceScore: number;
   frictionLevel: FrictionLevel;
+}
+
+export interface ActiveTask {
+  id: string;
+  startMs: number;
+  lockedDurationMs: number | null;
 }
 
 export interface TelemetryEvent {
   id: string;
   timestamp: number;
   tier: ComplexityTier;
+  category: TaskCategory;
+  resolutionSteps: number;
   divergenceScore: number;
   frictionLevel: FrictionLevel;
   sessionDurationMs: number;
   taskDurationMs: number;
 }
 
+export type TelemetryNode = TelemetryEvent;
+
 export interface TelemetrySession {
   events: TelemetryEvent[];
   sessionStartMs: number;
   appState: AppState;
-  currentTaskStartMs: number | null;
-  lockedTaskDurationMs: number | null;
+  activeTasks: ActiveTask[];
+  resolvingTaskId: string | null;
   isPaused: boolean;
   accumulatedPausedMs: number;
   pauseStartedMs: number | null;
@@ -64,8 +78,16 @@ export const FRICTION_LABELS: Record<FrictionLevel, string> = {
   critical: "Critical",
 };
 
+export const CATEGORY_LABELS: Record<TaskCategory, string> = {
+  physical: "Physical",
+  communication: "Communication",
+  software_exception: "Software Exception",
+};
+
 export const DEFAULT_PANEL_STATE: PanelState = {
   tier: 1,
+  category: "physical",
+  resolutionSteps: 1,
   divergenceScore: 12,
   frictionLevel: "low",
 };

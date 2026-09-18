@@ -15,12 +15,14 @@ import {
 } from "@/lib/metrics";
 import { deriveSomaticState } from "@/lib/somatic";
 import {
+  addConcurrentTask,
   discardNode,
-  endNode,
+  getResolvingTask,
   getServerSessionSnapshot,
   getSessionSnapshot,
   logEvent,
   resetSession,
+  resolveTask,
   setPaused,
   startNode,
   subscribeSession,
@@ -68,7 +70,10 @@ export function ShadowTelemetryApp() {
   );
   const clockMs = nowMs > 0 ? nowMs : session.pauseStartedMs ?? 0;
   const elapsedMs = shiftElapsedMs(session, clockMs);
-  const nodeElapsedMs = taskElapsedMs(session, clockMs);
+  const resolvingTask = getResolvingTask(session);
+  const resolvingElapsedLabel = resolvingTask
+    ? formatDuration(taskElapsedMs(resolvingTask, clockMs))
+    : null;
   const metrics = useMemo(
     () => synthesizeMetrics(session, clockMs),
     [session, clockMs],
@@ -81,10 +86,17 @@ export function ShadowTelemetryApp() {
     setPanel(DEFAULT_PANEL_STATE);
   }, []);
 
-  const handleEndNode = useCallback(() => {
+  const handleAddConcurrent = useCallback(() => {
     const timestamp = Date.now();
-    endNode(timestamp);
+    addConcurrentTask(timestamp);
     setNowMs(timestamp);
+  }, []);
+
+  const handleResolve = useCallback((taskId: string) => {
+    const timestamp = Date.now();
+    resolveTask(taskId, timestamp);
+    setNowMs(timestamp);
+    setPanel(DEFAULT_PANEL_STATE);
   }, []);
 
   const handleDiscard = useCallback(() => {
@@ -126,17 +138,22 @@ export function ShadowTelemetryApp() {
         somatic={somatic}
         appState={session.appState}
         elapsedMs={elapsedMs}
-        taskElapsedMs={nodeElapsedMs}
+        stackCount={session.activeTasks.length}
         formatElapsed={formatDuration}
       />
       <TacticalControlPanel
         appState={session.appState}
         isPaused={session.isPaused}
+        activeTasks={session.activeTasks}
+        resolvingElapsedLabel={resolvingElapsedLabel}
+        nowMs={clockMs}
+        formatElapsed={formatDuration}
         panel={panel}
         somatic={somatic}
         onChange={setPanel}
         onStartNode={handleStartNode}
-        onEndNode={handleEndNode}
+        onAddConcurrent={handleAddConcurrent}
+        onResolve={handleResolve}
         onDiscard={handleDiscard}
         onLog={handleLog}
         onTogglePause={handleTogglePause}
