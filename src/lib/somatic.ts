@@ -24,7 +24,7 @@ export function deriveSomaticState(
   if (appState === "ACTIVE_NODE") {
     return {
       band: "tense",
-      label: "RECORDING",
+      label: "TIMING",
       accent: "#f5a524",
       glow: "rgba(245, 165, 36, 0.5)",
       pulseMs: 1400,
@@ -35,7 +35,7 @@ export function deriveSomaticState(
   if (appState === "RECEIPT") {
     return {
       band: "tense",
-      label: "AWAITING INPUT",
+      label: "LOG THIS JOB",
       accent: "#f5a524",
       glow: "rgba(245, 165, 36, 0.38)",
       pulseMs: 1800,
@@ -46,7 +46,7 @@ export function deriveSomaticState(
   if (isPaused) {
     return {
       band: "serene",
-      label: "PAUSED",
+      label: "ON BREAK",
       accent: "#8b9aab",
       glow: "rgba(139, 154, 171, 0.35)",
       pulseMs: 2800,
@@ -56,7 +56,7 @@ export function deriveSomaticState(
 
   return {
     band: "serene",
-    label: "SOP ALIGNED",
+    label: "ON STANDARD",
     accent: "#2ee6d6",
     glow: "rgba(46, 230, 214, 0.48)",
     pulseMs: 2800,

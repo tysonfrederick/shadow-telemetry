@@ -11,12 +11,12 @@ export function ResolutionStepper({ value, onChange }: ResolutionStepperProps) {
   return (
     <section className="space-y-2">
       <h2 className="font-mono text-[10px] tracking-[0.22em] text-slate-muted">
-        RESOLUTION STEPS
+        STEPS TO FIX
       </h2>
       <div className="flex items-center gap-3">
         <button
           type="button"
-          aria-label="Decrease resolution steps"
+          aria-label="Remove a step"
           onClick={() => onChange(Math.max(1, steps - 1))}
           className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-line bg-slate-raised font-mono text-lg text-foreground active:scale-[0.96]"
         >
@@ -27,7 +27,7 @@ export function ResolutionStepper({ value, onChange }: ResolutionStepperProps) {
         </span>
         <button
           type="button"
-          aria-label="Increase resolution steps"
+          aria-label="Add a step"
           onClick={() => onChange(Math.min(99, steps + 1))}
           className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-line bg-slate-raised font-mono text-lg text-foreground active:scale-[0.96]"
         >

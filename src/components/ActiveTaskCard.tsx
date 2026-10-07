@@ -20,7 +20,7 @@ export function ActiveTaskCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] tracking-[0.18em] text-slate-muted">
-            NODE {index + 1}
+            JOB {index + 1}
           </p>
           <p className="mt-1 font-mono text-lg tabular-nums text-accent-amber">
             {elapsedLabel}
@@ -31,7 +31,7 @@ export function ActiveTaskCard({
           onClick={() => onResolve(task.id)}
           className="min-h-11 rounded-xl border border-accent-amber bg-accent-amber px-4 font-mono text-[11px] tracking-[0.14em] uppercase text-obsidian active:scale-[0.96]"
         >
-          Resolve
+          Finish
         </button>
       </div>
     </article>

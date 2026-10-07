@@ -168,7 +168,7 @@ export function ShadowTelemetryApp() {
         onClick={() => setModalOpen(true)}
         className="mt-6 min-h-12 rounded-xl border border-slate-line bg-slate-panel font-mono text-xs tracking-[0.18em] uppercase text-slate-muted"
       >
-        End Shift / Synthesize
+        View shift summary
       </button>
       <AnimatePresence>
         {modalOpen ? (

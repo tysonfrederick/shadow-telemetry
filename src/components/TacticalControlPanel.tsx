@@ -42,7 +42,7 @@ function DiscardButton({ onDiscard }: { onDiscard: () => void }) {
       onClick={onDiscard}
       className="flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-line bg-transparent font-mono text-xs tracking-[0.16em] uppercase text-slate-muted"
     >
-      Discard
+      Cancel
     </button>
   );
 }
@@ -67,7 +67,7 @@ export function TacticalControlPanel({
   return (
     <div className="space-y-5 rounded-2xl border border-slate-line bg-slate-panel/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <p className="font-mono text-[10px] tracking-[0.24em] text-slate-muted">
-        TACTICAL CONTROL
+        CONTROLS
       </p>
 
       {appState === "IDLE" ? (
@@ -78,7 +78,7 @@ export function TacticalControlPanel({
             disabled={isPaused}
             className="flex min-h-14 w-full items-center justify-center rounded-2xl border border-accent-teal bg-accent-teal text-[15px] font-semibold tracking-[0.18em] uppercase text-obsidian shadow-[0_0_28px_rgba(46,230,214,0.35)] transition-transform active:scale-[0.96] disabled:cursor-not-allowed disabled:border-slate-line disabled:bg-slate-raised disabled:text-slate-muted disabled:shadow-none"
           >
-            Start Node
+            Start job
           </button>
           <button
             type="button"
@@ -90,7 +90,7 @@ export function TacticalControlPanel({
                 : "border-slate-line bg-slate-raised/70 text-slate-muted"
             }`}
           >
-            {isPaused ? "Resume Shift" : "Pause Shift"}
+            {isPaused ? "Back to work" : "Take a break"}
           </button>
         </>
       ) : null}
@@ -115,7 +115,7 @@ export function TacticalControlPanel({
             onClick={onAddConcurrent}
             className="flex min-h-12 w-full items-center justify-center rounded-xl border border-accent-amber/50 bg-accent-amber/10 font-mono text-xs tracking-[0.14em] uppercase text-accent-amber active:scale-[0.96]"
           >
-            + Add Concurrent Task
+            + Start another job
           </button>
         </>
       ) : null}
@@ -124,7 +124,7 @@ export function TacticalControlPanel({
         <>
           {resolvingElapsedLabel ? (
             <p className="font-mono text-sm tabular-nums text-accent-amber">
-              Frozen node {resolvingElapsedLabel}
+              Time stopped: {resolvingElapsedLabel}
             </p>
           ) : null}
           <ComplexityTierSelector

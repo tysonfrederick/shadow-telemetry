@@ -16,7 +16,7 @@ export function ComplexityTierSelector({
   return (
     <section className="space-y-2">
       <h2 className="font-mono text-[10px] tracking-[0.22em] text-slate-muted">
-        COMPLEXITY TIER
+        HOW COMPLEX
       </h2>
       <div className="grid grid-cols-2 gap-2">
         {TIERS.map((tier) => {
@@ -33,7 +33,7 @@ export function ComplexityTierSelector({
               }`}
             >
               <span className="font-mono text-[10px] text-slate-muted">
-                TIER {tier}
+                LEVEL {tier}
               </span>
               <span className="mt-1 block text-[13px] leading-tight text-foreground">
                 {TIER_LABELS[tier]}

@@ -60,7 +60,7 @@ export function EndShiftModal({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="font-mono text-[10px] tracking-[0.22em] text-slate-muted">
-              SYNTHESIS
+              SHIFT SUMMARY
             </p>
             <h2 id="end-shift-title" className="mt-1 text-lg font-medium">
               End Shift
@@ -70,7 +70,7 @@ export function EndShiftModal({
             type="button"
             onClick={onClose}
             className="rounded-lg border border-slate-line p-1.5 text-slate-muted"
-            aria-label="Close synthesis"
+            aria-label="Close"
           >
             <X className="h-4 w-4" />
           </button>
@@ -78,24 +78,25 @@ export function EndShiftModal({
 
         <div className="mt-4 grid gap-2">
           <MetricCard
-            label="Total Shadow Time"
+            label="Extra work time"
             value={formatDuration(metrics.totalShadowTimeMs)}
-            hint="Time-weighted unscripted work this shift"
+            hint="Time spent on work that is not standard"
           />
           <MetricCard
-            label="Peak Cognitive Load"
+            label="Hardest job"
             value={`${metrics.peakCognitiveLoad}`}
-            hint="Highest composite of tier, friction, and divergence"
+            hint="Highest difficulty this shift"
           />
           <MetricCard
-            label="SOP Divergence Ratio"
+            label="Not standard work"
             value={`${Math.round(metrics.sopDivergenceRatio)}%`}
-            hint="Time-weighted mean divergence from standard work"
+            hint="Share of time that was not standard work"
           />
         </div>
 
         <p className="mt-3 font-mono text-[11px] text-slate-muted">
-          {metrics.eventCount} nodes · elapsed {formatDuration(metrics.elapsedMs)}
+          {metrics.eventCount} job{metrics.eventCount === 1 ? "" : "s"} · shift time{" "}
+          {formatDuration(metrics.elapsedMs)}
         </p>
 
         <button
@@ -103,7 +104,7 @@ export function EndShiftModal({
           onClick={onReset}
           className="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl border border-accent-crimson/50 bg-accent-crimson/15 font-mono text-xs tracking-[0.16em] uppercase text-accent-crimson"
         >
-          Close Shift
+          Clear shift
         </button>
       </motion.div>
     </motion.div>

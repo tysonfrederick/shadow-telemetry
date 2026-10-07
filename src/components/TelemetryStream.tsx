@@ -30,16 +30,16 @@ export function TelemetryStream({
     <section className="mt-6 space-y-3">
       <div className="flex items-baseline justify-between">
         <h2 className="font-mono text-[10px] tracking-[0.22em] text-slate-muted">
-          TELEMETRY STREAM
+          JOB LOG
         </h2>
         <span className="font-mono text-[10px] text-slate-muted">
-          {events.length} NODE{events.length === 1 ? "" : "S"}
+          {events.length} job{events.length === 1 ? "" : "s"}
         </span>
       </div>
 
       {events.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-line px-4 py-6 text-center text-sm text-slate-muted">
-          No triage nodes yet. Log an event to open the stream.
+          No jobs saved yet. Finish a job to see it here.
         </p>
       ) : (
         <ul className="space-y-2">
@@ -76,7 +76,7 @@ export function TelemetryStream({
                     />
                   </div>
                   <span className="font-mono text-[10px] tabular-nums text-slate-muted">
-                    Δ {event.divergenceScore}
+                    Not std {event.divergenceScore}
                   </span>
                   <span className="rounded-full border border-slate-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-slate-muted">
                     {FRICTION_LABELS[event.frictionLevel]}

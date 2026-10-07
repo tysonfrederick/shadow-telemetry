@@ -23,7 +23,7 @@ export function FrictionSelector({ value, onChange }: FrictionSelectorProps) {
   return (
     <section className="space-y-2">
       <h2 className="font-mono text-[10px] tracking-[0.22em] text-slate-muted">
-        FRICTION / THREAT LEVEL
+        HOW MUCH FRICTION
       </h2>
       <div className="grid grid-cols-2 gap-2">
         {LEVELS.map((level) => {

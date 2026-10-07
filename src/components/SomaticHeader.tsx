@@ -23,10 +23,10 @@ export function SomaticHeader({
   return (
     <header className="flex flex-col items-center pt-2 pb-5">
       <p className="font-mono text-[10px] tracking-[0.32em] text-slate-muted">
-        SHADOW TELEMETRY
+        WORK TRACKING
       </p>
       <h1 className="mt-1 text-center text-[15px] font-medium tracking-wide text-foreground">
-        Cognitive Workload &amp; Unscripted Exception Logger
+        Track extra work that is not standard
       </h1>
 
       <div
@@ -73,7 +73,7 @@ export function SomaticHeader({
       </p>
       {showStack ? (
         <p className="mt-1 font-mono text-[11px] tabular-nums text-accent-amber">
-          Active Stack: {stackCount}
+          Open jobs: {stackCount}
         </p>
       ) : null}
     </header>

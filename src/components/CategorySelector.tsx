@@ -17,7 +17,7 @@ export function CategorySelector({ value, onChange }: CategorySelectorProps) {
   return (
     <section className="space-y-2">
       <h2 className="font-mono text-[10px] tracking-[0.22em] text-slate-muted">
-        DOMAIN CATEGORY
+        WHAT KIND OF JOB
       </h2>
       <div className="grid grid-cols-1 gap-2">
         {CATEGORIES.map((category) => {

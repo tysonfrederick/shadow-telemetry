@@ -49,7 +49,7 @@ export interface TelemetrySession {
 
 export interface SomaticState {
   band: SomaticBand;
-  label: "SOP ALIGNED" | "PAUSED" | "RECORDING" | "AWAITING INPUT";
+  label: "ON STANDARD" | "ON BREAK" | "TIMING" | "LOG THIS JOB";
   accent: string;
   glow: string;
   pulseMs: number;
@@ -65,23 +65,23 @@ export interface SynthesisMetrics {
 }
 
 export const TIER_LABELS: Record<ComplexityTier, string> = {
-  1: "Routine Triage",
-  2: "Intermediate Exception",
-  3: "Advanced Deviation",
-  4: "Novel / Uncharted Exploratory",
+  1: "Everyday task",
+  2: "A few extra steps",
+  3: "Not standard work",
+  4: "Brand-new problem",
 };
 
 export const FRICTION_LABELS: Record<FrictionLevel, string> = {
-  low: "Low",
-  moderate: "Moderate",
-  elevated: "Elevated",
-  critical: "Critical",
+  low: "Easy",
+  moderate: "Some hassle",
+  elevated: "Hard",
+  critical: "Blocked",
 };
 
 export const CATEGORY_LABELS: Record<TaskCategory, string> = {
-  physical: "Physical",
-  communication: "Communication",
-  software_exception: "Software Exception",
+  physical: "Floor work",
+  communication: "Radio / talk",
+  software_exception: "Scanner / system",
 };
 
 export const DEFAULT_PANEL_STATE: PanelState = {

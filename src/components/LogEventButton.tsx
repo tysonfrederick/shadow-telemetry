@@ -19,7 +19,7 @@ export function LogEventButton({ somatic, onLog }: LogEventButtonProps) {
         boxShadow: `0 0 28px ${somatic.glow}`,
       }}
     >
-      Log Event
+      Save
     </button>
   );
 }
